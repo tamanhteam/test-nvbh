@@ -414,7 +414,7 @@
   <div class="quiz-header">
     <div class="q-counter">Câu <span id="currentQNum">1</span> / <span id="totalQNum">30</span></div>
     <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:3.33%"></div></div>
-    <div class="timer-badge" id="timerBadge">⏱ <span id="timerDisplay">15:00</span></div>
+    <div class="timer-badge" id="timerBadge">⏱ <span id="timerDisplay">30:00</span></div>
     <button class="btn-submit-header" onclick="earlySubmit()">Nộp bài</button>
   </div>
   <div class="question-card">
@@ -523,7 +523,7 @@
 const QUESTIONS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfEAlrtWR7Ey77WF6zGNzrvg94GnLvQP2WbB74sRpGI0HF36g35DHJkXq8EVkCs9oobdQNpFAqAWOJ/pub?gid=115400990&single=true&output=csv';
 const SHEET_URL         = 'https://script.google.com/macros/s/AKfycbzTi_zg9aK7rAxAx4Ha32yJn6THUGS9mIB-usP2VLeIi29gO0cGhPJA1uAla1Uv6mBV/exec';
 const RESULTS_CSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfEAlrtWR7Ey77WF6zGNzrvg94GnLvQP2WbB74sRpGI0HF36g35DHJkXq8EVkCs9oobdQNpFAqAWOJ/pub?output=csv';
-const QUIZ_SIZE = 30, TOTAL_TIME = 900;
+const QUIZ_SIZE = 50, TOTAL_TIME = 1800;
 const ADMIN_USER = 'quynv', ADMIN_PASS = '1234';
 
 let ALL_QUESTIONS = [];
@@ -576,7 +576,7 @@ function startQuiz() {
   state.answers=new Array(QUIZ_SIZE).fill(null);
   state.current=0; state.timeLeft=TOTAL_TIME; state.submitted=false;
   document.getElementById('totalQNum').textContent=QUIZ_SIZE;
-  show('quizScreen'); renderQuestion(); startTimer();
+  show('quizScreen'); renderQuestion(); updateTimer(); startTimer();
 }
 
 function startTimer(){
@@ -731,7 +731,7 @@ function parseResultsCSV(text){
 function updateAdminStats(){
   const total=adminData.length;
   if(!total){['statTotal','statAvg','statPass','statAvgTime'].forEach(id=>document.getElementById(id).textContent=id==='statTotal'?'0':'—');return;}
-  const scores=adminData.map(r=>{let s=parseFloat(r.score)||0;if(s>10||s<=0)s=parseFloat(((parseInt(r.correct)||0)/30*10).toFixed(1));return s;});
+  const scores=adminData.map(r=>{let s=parseFloat(r.score)||0;if(s>10||s<=0){const c=parseInt(r.correct)||0,w=parseInt(r.wrong)||0;s=c+w?parseFloat((c/(c+w)*10).toFixed(1)):0;}return s;});
   const avg=(scores.reduce((a,b)=>a+b,0)/total).toFixed(1),pass=scores.filter(s=>s>=5).length;
   const times=adminData.map(r=>{if(!r.timeTaken)return 0;const p=r.timeTaken.split(':');return parseInt(p[0])*60+(parseInt(p[1])||0);}).filter(t=>t>0);
   const avgSec=times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
@@ -755,7 +755,7 @@ function renderAdminTable(){
   if(!filtered.length){tbody.innerHTML='';empty.style.display='block';empty.innerHTML='<div class="big">📭</div><div>Không có kết quả nào</div>';return;}
   empty.style.display='none';
   tbody.innerHTML=filtered.map((r,i)=>{
-    let score=parseFloat(r.score)||0;if(score>10||score<=0)score=parseFloat(((parseInt(r.correct)||0)/30*10).toFixed(1));
+    let score=parseFloat(r.score)||0;if(score>10||score<=0){const c=parseInt(r.correct)||0,w=parseInt(r.wrong)||0;score=c+w?parseFloat((c/(c+w)*10).toFixed(1)):0;}
     let tg=r.timeTaken||'—';
     if(tg.includes('T')&&tg.includes('Z')){try{const d=new Date(tg);const ts=d.getHours()*3600+d.getMinutes()*60+d.getSeconds();tg=String(Math.floor(ts/60)).padStart(2,'0')+':'+String(ts%60).padStart(2,'0');}catch(e){tg='—';}}
     return `<tr>
